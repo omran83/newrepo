@@ -1,0 +1,44 @@
+---
+# tasks file for r1soft
+- name: copy repo to red hat family 
+  when: ansible_os_family == "RedHat"
+  template:
+    src: ../templates/r1soft.repo
+    dest: /etc/yum.repos.d/r1soft.repo
+
+
+
+- name: create repo on ubuntu
+  when: ansible_os_family == "debian"
+  shell: "{{ item }}"
+  with_items: 
+    - "echo deb http://repo.r1soft.com/apt stable main >> /etc/apt/sources.list"
+    - "wget http://repo.r1soft.com/r1soft.asc"
+    - "apt-key add r1soft.asc"
+    - "apt-get update"
+
+     
+- name: install r1soft agent 
+  package:
+    
+- name: run r1soft agent
+  when: (ansible_os_family == "RedHat" and  ansible_distribution_major_version == "6")
+  service: 
+    name: cdp-agent
+    state: started
+
+- name: run r1soft agent
+  when: 
+    - ( ansible_os_family == "RedHat" and  ansible_distribution_major_version == "7")
+    - (ansible_os_family == "debian")
+  systemd: 
+    name: sbm-agent
+    state: started
+
+
+
+
+
+- name: get key
+  when: ansible_os_family == "RedHat"
+  command: r1soft-setup --get-key "{{ r1softserver }}"    
